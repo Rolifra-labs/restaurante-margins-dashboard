@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registro - RESTAURANTES</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .gradient-text { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-purple-50 to-blue-50 min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-md">
+    <div class="bg-white rounded-2xl shadow-xl p-8">
+      <div class="text-center mb-8">
+        <div class="text-3xl font-bold gradient-text mb-2">RESTAURANTES</div>
+        <p class="text-gray-600">Crea tu cuenta (14 días gratis)</p>
+      </div>
+
+      <form id="register-form" class="space-y-4">
+        <div>
+          <label for="restaurant_name" class="block text-sm font-medium text-gray-700 mb-2">Nombre del Restaurante</label>
+          <input
+            type="text"
+            id="restaurant_name"
+            name="restaurant_name"
+            required
+            placeholder="Mi Restaurante"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+          >
+        </div>
+
+        <div>
+          <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            required
+            placeholder="tu@email.com"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+          >
+        </div>
+
+        <div>
+          <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Contraseña</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            required
+            placeholder="Mínimo 8 caracteres"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+          >
+        </div>
+
+        <div>
+          <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">Teléfono (opcional)</label>
+          <input
+            type="tel"
+            id="phone"
+            name="phone"
+            placeholder="+34 600 000 000"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+          >
+        </div>
+
+        <div class="pt-2">
+          <label class="flex items-start gap-2">
+            <input
+              type="checkbox"
+              required
+              class="mt-1 w-4 h-4"
+            >
+            <span class="text-sm text-gray-600">
+              Acepto los términos de servicio y la política de privacidad
+            </span>
+          </label>
+        </div>
+
+        <button
+          type="submit"
+          class="w-full py-2 bg-gradient-to-r from-purple-600 to-purple-800 text-white rounded-lg font-semibold hover:shadow-lg transition"
+        >
+          Crear cuenta
+        </button>
+      </form>
+
+      <div class="mt-6 text-center text-sm text-gray-600">
+        ¿Ya tienes cuenta?
+        <a href="/login.html" class="text-purple-600 font-semibold hover:text-purple-800">
+          Inicia sesión
+        </a>
+      </div>
+
+      <p class="text-xs text-gray-500 text-center mt-6">
+        Al registrarte, te damos 14 días de acceso completo. Sin tarjeta de crédito requerida.
+      </p>
+    </div>
+
+    <p class="text-center text-gray-600 mt-6">
+      <a href="/" class="hover:text-purple-600">← Volver al inicio</a>
+    </p>
+  </div>
+
+  <script type="module">
+    import { handleRegisterSubmit } from './js/auth.js';
+
+    document.getElementById('register-form').addEventListener('submit', handleRegisterSubmit);
+  </script>
+</body>
+</html>

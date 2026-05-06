@@ -1,0 +1,208 @@
+{
+  "name": "Webhook - Receive Orders",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "restaurant-orders",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook_trigger",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://backend.rolifra.com/v1/databases/main_db/collections/dishes/documents",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "requestMethod": "GET",
+        "options": {}
+      },
+      "id": "get_dish",
+      "name": "Get Dish Details",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract webhook data\nconst body = $input.first().json.body;\nconst restaurantId = body.restaurant_id;\nconst dishId = body.dish_id;\nconst quantity = body.quantity || 1;\nconst salePrice = body.sale_price;\nconst platform = body.platform || 'manual';\n\n// Calculate cost (will get ingredient_cost from previous step)\nconst ingredientCost = $('Get Dish Details').first().json.ingredient_cost || 0;\nconst totalCost = ingredientCost * quantity;\nconst margin = salePrice - totalCost;\nconst marginPercent = (margin / salePrice) * 100;\n\nreturn {\n  restaurantId,\n  dishId,\n  quantity,\n  salePrice,\n  totalCost,\n  margin,\n  marginPercent,\n  platform,\n  orderDate: new Date().toISOString()\n};"
+      },
+      "id": "calculate_margin",
+      "name": "Calculate Margin",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://backend.rolifra.com/v1/databases/main_db/collections/orders/documents",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "requestMethod": "POST",
+        "bodyParametersUi": "json",
+        "bodyJson": "{\n  \"restaurant_id\": \"{{$json.restaurantId}}\",\n  \"dish_id\": \"{{$json.dishId}}\",\n  \"quantity\": {{$json.quantity}},\n  \"sale_price\": {{$json.salePrice}},\n  \"cost\": {{$json.totalCost}},\n  \"margin\": {{$json.margin}},\n  \"margin_percent\": {{$json.marginPercent}},\n  \"platform\": \"{{$json.platform}}\",\n  \"order_date\": \"{{$json.orderDate}}\"\n}",
+        "options": {}
+      },
+      "id": "save_order",
+      "name": "Save Order to Appwrite",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{$json.marginPercent}}",
+              "operation": "<",
+              "value2": 15
+            }
+          ]
+        }
+      },
+      "id": "check_low_margin",
+      "name": "Low Margin?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.telegram.org/bot{{$env.TELEGRAM_BOT_TOKEN}}/sendMessage",
+        "requestMethod": "POST",
+        "bodyParametersUi": "json",
+        "bodyJson": "{\n  \"chat_id\": \"{{$env.TELEGRAM_CHAT_ID}}\",\n  \"text\": \"⚠️ Alerta: Margen bajo en pedido!\\nMargen: {{$json.marginPercent}}% (mínimo: 15%)\\nPlato: {{$json.dishId}}\"\n}",
+        "options": {}
+      },
+      "id": "send_telegram",
+      "name": "Send Telegram Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1250, 200]
+    },
+    {
+      "parameters": {
+        "fromEmail": "alerts@restaurantes.io",
+        "toEmail": "{{$json.restaurantEmail}}",
+        "subject": "⚠️ Alerta: Margen bajo en pedido",
+        "emailType": "html",
+        "htmlEmail": "<h3>Margen Bajo Detectado</h3>\n<p>Un pedido ha sido registrado con margen inferior al mínimo configurado.</p>\n<ul>\n<li>Margen: {{$json.marginPercent}}%</li>\n<li>Mínimo: 15%</li>\n<li>Plato: {{$json.dishId}}</li>\n</ul>"
+      },
+      "id": "send_email",
+      "name": "Send Email Alert",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [1250, 350]
+    },
+    {
+      "parameters": {
+        "responseBody": "{\"success\": true, \"orderId\": \"{{$json.$id}}\", \"margin_percent\": {{$json.marginPercent}}, \"alert_sent\": {{$json.alertSent}}}",
+        "responseCode": 200
+      },
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1450, 300]
+    }
+  ],
+  "connections": {
+    "webhook_trigger": {
+      "main": [
+        [
+          {
+            "node": "get_dish",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get_dish": {
+      "main": [
+        [
+          {
+            "node": "calculate_margin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "calculate_margin": {
+      "main": [
+        [
+          {
+            "node": "save_order",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "save_order": {
+      "main": [
+        [
+          {
+            "node": "check_low_margin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "check_low_margin": {
+      "main": [
+        [
+          {
+            "node": "send_telegram",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "send_email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "send_telegram": {
+      "main": [
+        [
+          {
+            "node": "respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "send_email": {
+      "main": [
+        [
+          {
+            "node": "respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "1"
+}

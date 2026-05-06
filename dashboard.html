@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - RESTAURANTES</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .gradient-text { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .kpi-card { background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%); border: 1px solid rgba(102, 126, 234, 0.2); }
+    .margin-safe { background-color: #dcfce7; }
+    .margin-alert { background-color: #fee2e2; }
+    .modal-hidden { display: none; }
+    .modal-visible { display: flex; }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <!-- Navbar -->
+  <nav class="bg-white border-b border-gray-200 sticky top-0 z-40">
+    <div class="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <div class="text-2xl font-bold gradient-text">RESTAURANTES</div>
+        <span class="hidden sm:inline text-gray-600 text-sm">|</span>
+        <span id="restaurant-name" class="hidden sm:inline text-gray-700 font-medium"></span>
+      </div>
+      <button id="logout-btn" class="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition">
+        Cerrar sesión
+      </button>
+    </div>
+  </nav>
+
+  <div class="flex h-[calc(100vh-73px)]">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="w-64 bg-white border-r border-gray-200 p-4 overflow-y-auto hidden md:block">
+      <nav class="space-y-2">
+        <a href="#" data-section="dashboard" class="block px-4 py-2 rounded-lg bg-purple-100 text-purple-600 font-medium active-nav">
+          📊 Dashboard
+        </a>
+        <a href="#" data-section="dishes" class="block px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100 active-nav">
+          🍽️ Mis Platos
+        </a>
+        <a href="#" data-section="analytics" class="block px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100 active-nav">
+          📈 Analytics
+        </a>
+        <a href="#" data-section="alerts" class="block px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100 active-nav">
+          🔴 Alertas
+        </a>
+        <a href="#" data-section="settings" class="block px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100 active-nav">
+          ⚙️ Configuración
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto">
+      <!-- Dashboard Section -->
+      <section id="dashboard-section" class="p-4 sm:p-8">
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div class="kpi-card p-6 rounded-lg">
+            <p class="text-gray-600 text-sm mb-2">Margen Promedio</p>
+            <div class="text-3xl font-bold gradient-text" id="kpi-margin">-</div>
+            <p class="text-xs text-gray-500 mt-2">% sobre venta</p>
+          </div>
+          <div class="kpi-card p-6 rounded-lg">
+            <p class="text-gray-600 text-sm mb-2">Pedidos Hoy</p>
+            <div class="text-3xl font-bold text-blue-600" id="kpi-orders">-</div>
+            <p class="text-xs text-gray-500 mt-2">órdenes registradas</p>
+          </div>
+          <div class="kpi-card p-6 rounded-lg">
+            <p class="text-gray-600 text-sm mb-2">Ingresos Hoy</p>
+            <div class="text-3xl font-bold text-green-600" id="kpi-revenue">-</div>
+            <p class="text-xs text-gray-500 mt-2">€ acumulados</p>
+          </div>
+          <div class="kpi-card p-6 rounded-lg">
+            <p class="text-gray-600 text-sm mb-2">Platos Activos</p>
+            <div class="text-3xl font-bold text-purple-600" id="kpi-dishes">-</div>
+            <p class="text-xs text-gray-500 mt-2">en catálogo</p>
+          </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          <div class="bg-white p-6 rounded-lg shadow">
+            <h3 class="text-lg font-semibold mb-4">Márgenes por Plato</h3>
+            <canvas id="margin-chart" style="max-height: 300px;"></canvas>
+          </div>
+          <div class="bg-white p-6 rounded-lg shadow">
+            <h3 class="text-lg font-semibold mb-4">Ventas Últimos 7 Días</h3>
+            <canvas id="sales-chart" style="max-height: 300px;"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- Dishes Section -->
+      <section id="dishes-section" class="p-4 sm:p-8 hidden">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-2xl font-bold">Mis Platos</h2>
+          <button id="add-dish-btn" class="px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-800 text-white rounded-lg font-semibold hover:shadow-lg transition">
+            + Añadir Plato
+          </button>
+        </div>
+
+        <div class="bg-white rounded-lg shadow overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th class="px-6 py-3 text-left font-semibold">Nombre</th>
+                <th class="px-6 py-3 text-left font-semibold">Precio Venta</th>
+                <th class="px-6 py-3 text-left font-semibold">Costo</th>
+                <th class="px-6 py-3 text-left font-semibold">Margen %</th>
+                <th class="px-6 py-3 text-left font-semibold">Estado</th>
+                <th class="px-6 py-3 text-left font-semibold">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="dishes-table-body">
+              <tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">Cargando platos...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Analytics Section -->
+      <section id="analytics-section" class="p-4 sm:p-8 hidden">
+        <h2 class="text-2xl font-bold mb-6">Analytics</h2>
+        <div class="bg-white p-6 rounded-lg shadow">
+          <p class="text-gray-600">Análisis detallado de rendimiento por plato y tendencias de venta.</p>
+          <p class="text-sm text-gray-500 mt-4">Próximamente: exportación a PDF, predicciones de demanda.</p>
+        </div>
+      </section>
+
+      <!-- Alerts Section -->
+      <section id="alerts-section" class="p-4 sm:p-8 hidden">
+        <h2 class="text-2xl font-bold mb-6">Alertas</h2>
+        <div class="bg-white p-6 rounded-lg shadow">
+          <p class="text-gray-600">Configura alertas cuando un plato cae por debajo de tu margen mínimo.</p>
+          <p class="text-sm text-gray-500 mt-4">Las alertas se envían por email y Telegram (si está configurado).</p>
+        </div>
+      </section>
+
+      <!-- Settings Section -->
+      <section id="settings-section" class="p-4 sm:p-8 hidden">
+        <h2 class="text-2xl font-bold mb-6">Configuración</h2>
+        <div class="bg-white p-6 rounded-lg shadow max-w-2xl">
+          <h3 class="font-semibold mb-4">Datos del Restaurante</h3>
+          <div id="settings-content">Cargando...</div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal: Add/Edit Dish -->
+  <div id="dish-modal" class="modal-hidden fixed inset-0 bg-black/50 z-50 items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+      <h2 id="modal-title" class="text-xl font-bold mb-4">Añadir Plato</h2>
+      <form id="dish-form" class="space-y-4">
+        <input type="hidden" id="dish-id" name="dish_id">
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Nombre del Plato</label>
+          <input type="text" name="name" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Categoría (opcional)</label>
+          <input type="text" name="category" placeholder="Principales, Postres, etc." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Precio Venta (€)</label>
+            <input type="number" name="sale_price" step="0.01" min="0" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Costo Ingredientes (€)</label>
+            <input type="number" name="ingredient_cost" step="0.01" min="0" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Margen Mínimo Alerta (%)</label>
+          <input type="number" name="min_margin_alert" step="0.1" min="0" value="15" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+        </div>
+
+        <div class="flex gap-2 pt-4">
+          <button type="submit" class="flex-1 py-2 bg-gradient-to-r from-purple-600 to-purple-800 text-white rounded-lg font-semibold hover:shadow-lg transition">
+            Guardar
+          </button>
+          <button type="button" id="modal-close-btn" class="flex-1 py-2 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition">
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module">
+    import { auth } from './js/auth.js';
+    import { app } from './js/app.js';
+    import { charts } from './js/charts.js';
+    import { handleLogout } from './js/auth.js';
+
+    // Check auth on load
+    async function init() {
+      const user = await auth.getCurrentUser();
+      if (!user) {
+        window.location.href = '/login.html';
+        return;
+      }
+
+      // Set restaurant name
+      document.getElementById('restaurant-name').textContent = user.restaurant?.name || 'Restaurante';
+
+      // Load initial data
+      await loadDashboard();
+
+      // Setup event listeners
+      setupEventListeners();
+    }
+
+    async function loadDashboard() {
+      await app.fetchRestaurant();
+      await app.fetchDishes();
+      await app.fetchOrders();
+
+      updateKPIs();
+      renderCharts();
+      renderDishesTable();
+    }
+
+    function updateKPIs() {
+      document.getElementById('kpi-margin').textContent = app.getAverageMargin() + '%';
+      document.getElementById('kpi-orders').textContent = app.getOrdersToday();
+      document.getElementById('kpi-revenue').textContent = '€' + app.getRevenueToday();
+      document.getElementById('kpi-dishes').textContent = app.getActiveDishes();
+    }
+
+    function renderCharts() {
+      charts.initMarginChart(app.getMarginChartData());
+      charts.initSalesChart(app.getSalesChartData());
+    }
+
+    function renderDishesTable() {
+      const tbody = document.getElementById('dishes-table-body');
+      if (app.dishes.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">No hay platos. Añade uno.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = app.dishes.map(dish => `
+        <tr class="${dish.margin_percent >= 15 ? 'margin-safe' : 'margin-alert'}">
+          <td class="px-6 py-3">${dish.name}</td>
+          <td class="px-6 py-3">€${parseFloat(dish.sale_price).toFixed(2)}</td>
+          <td class="px-6 py-3">€${parseFloat(dish.ingredient_cost).toFixed(2)}</td>
+          <td class="px-6 py-3 font-bold">${parseFloat(dish.margin_percent).toFixed(1)}%</td>
+          <td class="px-6 py-3">${dish.is_active ? '✓ Activo' : '✗ Inactivo'}</td>
+          <td class="px-6 py-3 space-x-2">
+            <button data-edit-dish="${dish.$id}" class="text-blue-600 hover:underline">Editar</button>
+            <button data-delete-dish="${dish.$id}" class="text-red-600 hover:underline">Eliminar</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function setupEventListeners() {
+      // Navigation
+      document.querySelectorAll('.active-nav').forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          const section = e.target.closest('a').dataset.section;
+          switchSection(section);
+        });
+      });
+
+      // Logout
+      document.getElementById('logout-btn').addEventListener('click', handleLogout);
+
+      // Add dish button
+      document.getElementById('add-dish-btn').addEventListener('click', () => {
+        document.getElementById('dish-id').value = '';
+        document.getElementById('modal-title').textContent = 'Añadir Plato';
+        document.getElementById('dish-form').reset();
+        openModal();
+      });
+
+      // Modal controls
+      document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+      document.getElementById('dish-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'dish-modal') closeModal();
+      });
+
+      // Dish form submit
+      document.getElementById('dish-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const dishId = document.getElementById('dish-id').value;
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData);
+
+        try {
+          if (dishId) {
+            await app.updateDish(dishId, data);
+          } else {
+            await app.createDish(data);
+          }
+          closeModal();
+          renderDishesTable();
+          updateKPIs();
+          renderCharts();
+        } catch (error) {
+          alert('Error: ' + error.message);
+        }
+      });
+
+      // Dishes table actions
+      document.addEventListener('click', async (e) => {
+        if (e.target.dataset.editDish) {
+          const dish = app.dishes.find(d => d.$id === e.target.dataset.editDish);
+          if (dish) {
+            document.getElementById('dish-id').value = dish.$id;
+            document.getElementById('modal-title').textContent = 'Editar Plato';
+            document.querySelector('input[name="name"]').value = dish.name;
+            document.querySelector('input[name="category"]').value = dish.category || '';
+            document.querySelector('input[name="sale_price"]').value = dish.sale_price;
+            document.querySelector('input[name="ingredient_cost"]').value = dish.ingredient_cost;
+            document.querySelector('input[name="min_margin_alert"]').value = dish.min_margin_alert;
+            openModal();
+          }
+        }
+
+        if (e.target.dataset.deleteDish) {
+          if (confirm('¿Eliminar este plato?')) {
+            try {
+              await app.deleteDish(e.target.dataset.deleteDish);
+              renderDishesTable();
+              updateKPIs();
+              renderCharts();
+            } catch (error) {
+              alert('Error: ' + error.message);
+            }
+          }
+        }
+      });
+    }
+
+    function openModal() {
+      document.getElementById('dish-modal').classList.remove('modal-hidden');
+      document.getElementById('dish-modal').classList.add('modal-visible');
+    }
+
+    function closeModal() {
+      document.getElementById('dish-modal').classList.add('modal-hidden');
+      document.getElementById('dish-modal').classList.remove('modal-visible');
+    }
+
+    function switchSection(section) {
+      document.querySelectorAll('section[id$="-section"]').forEach(s => s.classList.add('hidden'));
+      document.getElementById(section + '-section').classList.remove('hidden');
+
+      document.querySelectorAll('.active-nav').forEach(link => {
+        link.classList.remove('bg-purple-100', 'text-purple-600');
+        link.classList.add('text-gray-700', 'hover:bg-gray-100');
+      });
+      document.querySelector(`[data-section="${section}"]`).classList.add('bg-purple-100', 'text-purple-600');
+      document.querySelector(`[data-section="${section}"]`).classList.remove('text-gray-700', 'hover:bg-gray-100');
+    }
+
+    init();
+  </script>
+</body>
+</html>

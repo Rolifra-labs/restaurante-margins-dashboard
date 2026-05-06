@@ -1,0 +1,141 @@
+{
+  "name": "Cron - Calculate Margins Hourly",
+  "nodes": [
+    {
+      "parameters": {
+        "trigger": "every",
+        "unit": "hours",
+        "value": 1
+      },
+      "id": "cron_trigger",
+      "name": "Cron",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://backend.rolifra.com/v1/databases/main_db/collections/dishes/documents",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "requestMethod": "GET",
+        "options": {}
+      },
+      "id": "fetch_all_dishes",
+      "name": "Fetch All Dishes",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Process each dish and recalculate margin\nconst dishes = $input.all();\n\nreturn dishes.map(dish => {\n  const salePrice = parseFloat(dish.json.sale_price);\n  const ingredientCost = parseFloat(dish.json.ingredient_cost);\n  const marginPercent = ((salePrice - ingredientCost) / salePrice) * 100;\n\n  return {\n    $id: dish.json.$id,\n    updated_margin: marginPercent,\n    last_recalc: new Date().toISOString()\n  };\n});"
+      },
+      "id": "recalc_margins",
+      "name": "Recalculate All Margins",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Batch update request\nconst updates = $input.all();\nconst payload = {\n  documents: updates.map(u => ({\n    $id: u.json.$id,\n    margin_percent: u.json.updated_margin,\n    last_updated: u.json.last_recalc\n  }))\n};\n\nreturn payload;"
+      },
+      "id": "prepare_batch",
+      "name": "Prepare Batch Update",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://backend.rolifra.com/v1/batch",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "requestMethod": "POST",
+        "bodyParametersUi": "json",
+        "bodyJson": "{{$json}}",
+        "options": {}
+      },
+      "id": "batch_update",
+      "name": "Batch Update Appwrite",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "subject": "✓ Márgenes recalculados",
+        "fromEmail": "system@restaurantes.io",
+        "toEmail": "admin@restaurantes.io",
+        "emailType": "text",
+        "textEmail": "Cálculo de márgenes completado a {{$json.timestamp}}\n\nDocumentos procesados: {{$json.processed}}\nÚltima actualización: {{$json.timestamp}}"
+      },
+      "id": "send_report",
+      "name": "Send Report Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [1250, 300]
+    }
+  ],
+  "connections": {
+    "cron_trigger": {
+      "main": [
+        [
+          {
+            "node": "fetch_all_dishes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "fetch_all_dishes": {
+      "main": [
+        [
+          {
+            "node": "recalc_margins",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "recalc_margins": {
+      "main": [
+        [
+          {
+            "node": "prepare_batch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "prepare_batch": {
+      "main": [
+        [
+          {
+            "node": "batch_update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "batch_update": {
+      "main": [
+        [
+          {
+            "node": "send_report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "1"
+}

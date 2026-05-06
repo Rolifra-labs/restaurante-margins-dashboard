@@ -1,0 +1,44 @@
+{
+  "name": "Cron - Sync Uber Eats Orders (Future)",
+  "nodes": [
+    {
+      "parameters": {
+        "trigger": "every",
+        "unit": "minutes",
+        "value": 15
+      },
+      "id": "cron_trigger",
+      "name": "Cron - Every 15 min",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// PLACEHOLDER: This workflow will:\n// 1. Connect to Uber Eats API using OAuth\n// 2. Fetch new orders since last sync\n// 3. Map Uber menu items to local dishes\n// 4. Call webhook-orders workflow for each order\n// 5. Update sync timestamp\n\nreturn {\n  status: 'WORKFLOW_NOT_YET_IMPLEMENTED',\n  nextSteps: [\n    'Add Uber Eats API credentials',\n    'Get restaurant_id from Uber account',\n    'Map Uber items to local dishes',\n    'Test order sync',\n    'Enable workflow'\n  ]\n};"
+      },
+      "id": "placeholder",
+      "name": "Placeholder - Not Yet Implemented",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [450, 300]
+    }
+  ],
+  "connections": {
+    "cron_trigger": {
+      "main": [
+        [
+          {
+            "node": "placeholder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "1",
+  "notes": "FUTURE IMPLEMENTATION: This workflow will sync orders from Uber Eats API every 15 minutes. When implemented, it will:\n\n1. Authenticate with Uber Eats OAuth\n2. Fetch new orders from restaurant account\n3. Match Uber menu items with local dish_id in Appwrite\n4. Call the webhook-orders workflow for each order\n5. Store sync timestamp to prevent duplicates\n\nThis requires:\n- Uber Eats API credentials (obtainable from partner dashboard)\n- n8n HTTP Node to Uber API\n- Item mapping logic between Uber menu and local dishes\n- Error handling for order sync failures"
+}

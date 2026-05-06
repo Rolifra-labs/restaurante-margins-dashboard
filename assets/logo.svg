@@ -1,0 +1,26 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Plate -->
+  <circle cx="50" cy="50" r="40" fill="url(#logoGradient)" opacity="0.1" stroke="url(#logoGradient)" stroke-width="2"/>
+
+  <!-- Fork -->
+  <g stroke="url(#logoGradient)" stroke-width="3" fill="none" stroke-linecap="round">
+    <line x1="30" y1="35" x2="30" y2="65"/>
+    <line x1="25" y1="40" x2="20" y2="50"/>
+    <line x1="35" y1="40" x2="40" y2="50"/>
+    <line x1="30" y1="40" x2="30" y2="50"/>
+  </g>
+
+  <!-- Chart bars (margins) -->
+  <g fill="url(#logoGradient)">
+    <rect x="55" y="55" width="8" height="15" rx="2"/>
+    <rect x="67" y="48" width="8" height="22" rx="2"/>
+    <rect x="79" y="60" width="8" height="10" rx="2"/>
+  </g>
+</svg>
