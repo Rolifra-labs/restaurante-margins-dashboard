@@ -95,7 +95,7 @@ class AppManager {
       const dish = await this.database.createDocument(
         'main_db',
         'dishes',
-        window.ID?.unique() || `dish_${Date.now()}`,
+        window.Appwrite?.ID?.unique() || `dish_${Date.now()}`,
         {
           restaurant_id: this.currentRestaurant.$id,
           name: dishData.name,
@@ -250,7 +250,7 @@ class AppManager {
       const order = await this.database.createDocument(
         'main_db',
         'orders',
-        window.ID?.unique() || `order_${Date.now()}`,
+        window.Appwrite?.ID?.unique() || `order_${Date.now()}`,
         {
           restaurant_id: this.currentRestaurant.$id,
           dish_id: orderData.dish_id,

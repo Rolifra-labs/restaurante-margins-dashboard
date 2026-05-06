@@ -35,7 +35,7 @@ class AuthManager {
   async registerRestaurant(restaurantName, email, password, phone) {
     try {
       // Create user account
-      const userId = window.ID?.unique() || `restaurant_${Date.now()}`;
+      const userId = window.Appwrite?.ID?.unique() || `restaurant_${Date.now()}`;
       const user = await this.account.create(userId, email, password);
 
       // Calculate trial end date
@@ -59,7 +59,7 @@ class AuthManager {
       );
 
       // Auto-login after registration
-      await this.account.createEmailSession(email, password);
+      await this.account.createEmailPasswordSession(email, password);
 
       return { user, restaurant };
     } catch (error) {
@@ -70,7 +70,7 @@ class AuthManager {
 
   async loginEmail(email, password) {
     try {
-      const session = await this.account.createEmailSession(email, password);
+      const session = await this.account.createEmailPasswordSession(email, password);
       const user = await this.account.get();
       this.currentUser = user;
       return { session, user };
