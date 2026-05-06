@@ -1,5 +1,5 @@
-import { config, getAppwriteClient } from './config.js?v=20260506-3';
-import { auth } from './auth.js?v=20260506-3';
+import { config, getAppwriteClient } from './config.js?v=20260506-4';
+import { auth } from './auth.js?v=20260506-4';
 
 class AppManager {
   constructor() {
