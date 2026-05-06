@@ -37,10 +37,15 @@ export const config = {
 // Initialize Appwrite client
 let appwriteClient = null;
 
+function normalizeAppwriteEndpoint(endpoint) {
+  const trimmed = String(endpoint || '').replace(/\/+$/, '');
+  return trimmed.endsWith('/v1') ? trimmed : `${trimmed}/v1`;
+}
+
 export function initAppwrite() {
   if (typeof window !== 'undefined' && window.Appwrite) {
     appwriteClient = new window.Appwrite.Client()
-      .setEndpoint(config.appwriteEndpoint)
+      .setEndpoint(normalizeAppwriteEndpoint(config.appwriteEndpoint))
       .setProject(config.appwriteProject);
     return appwriteClient;
   }
