@@ -34,32 +34,39 @@ class AuthManager {
 
   async registerRestaurant(restaurantName, email, password, phone) {
     try {
-      // Create user account
       const userId = window.Appwrite?.ID?.unique() || `restaurant_${Date.now()}`;
+
+      // 1. Create user account
       const user = await this.account.create(userId, email, password);
 
-      // Calculate trial end date
+      // 2. Create session BEFORE any database writes (need auth)
+      await this.account.createEmailPasswordSession(email, password);
+
+      // 3. Calculate trial end date
       const trialEndDate = new Date();
       trialEndDate.setDate(trialEndDate.getDate() + config.trialDays);
 
-      // Create restaurant document in database
+      // 4. Create restaurant document with user-scoped permissions
+      const { Permission, Role } = window.Appwrite;
       const restaurant = await this.database.createDocument(
-        'main_db', // database ID
-        'restaurants', // collection ID
+        'main_db',
+        'restaurants',
         userId,
         {
           user_id: userId,
           name: restaurantName,
           email: email,
-          phone: phone,
+          phone: phone || '',
           subscription_status: 'trial',
           trial_ends: trialEndDate.toISOString(),
           created_at: new Date().toISOString()
-        }
+        },
+        [
+          Permission.read(Role.user(userId)),
+          Permission.update(Role.user(userId)),
+          Permission.delete(Role.user(userId))
+        ]
       );
-
-      // Auto-login after registration
-      await this.account.createEmailPasswordSession(email, password);
 
       return { user, restaurant };
     } catch (error) {

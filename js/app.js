@@ -92,6 +92,8 @@ class AppManager {
       // Calculate margin percentage
       const marginPercent = this.calculateMargin(dishData.sale_price, dishData.ingredient_cost);
 
+      const { Permission, Role } = window.Appwrite;
+      const userId = this.currentRestaurant.$id;
       const dish = await this.database.createDocument(
         'main_db',
         'dishes',
@@ -106,7 +108,12 @@ class AppManager {
           min_margin_alert: parseFloat(dishData.min_margin_alert) || config.defaultMinMarginAlert,
           is_active: true,
           created_at: new Date().toISOString()
-        }
+        },
+        [
+          Permission.read(Role.user(userId)),
+          Permission.update(Role.user(userId)),
+          Permission.delete(Role.user(userId))
+        ]
       );
 
       this.dishes.push(dish);
@@ -247,6 +254,8 @@ class AppManager {
       const margin = orderData.sale_price - cost;
       const marginPercent = (margin / orderData.sale_price) * 100;
 
+      const { Permission, Role } = window.Appwrite;
+      const userId = this.currentRestaurant.$id;
       const order = await this.database.createDocument(
         'main_db',
         'orders',
@@ -261,7 +270,12 @@ class AppManager {
           margin: margin,
           margin_percent: marginPercent,
           order_date: new Date().toISOString()
-        }
+        },
+        [
+          Permission.read(Role.user(userId)),
+          Permission.update(Role.user(userId)),
+          Permission.delete(Role.user(userId))
+        ]
       );
 
       this.orders.unshift(order);
