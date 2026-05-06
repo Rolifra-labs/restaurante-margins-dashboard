@@ -1,4 +1,4 @@
-import { config } from './config.js?v=20260506-4';
+import { config } from './config.js';
 
 class ChartManager {
   constructor() {

@@ -1,4 +1,4 @@
-import { config, getAppwriteClient } from './config.js?v=20260506-4';
+import { config, getAppwriteClient } from './config.js';
 
 class AuthManager {
   constructor() {

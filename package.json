@@ -1,0 +1,11 @@
+{
+  "name": "restaurante-margins-dashboard",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "seed:main-db": "node scripts/seed-main-db.mjs"
+  },
+  "dependencies": {
+    "node-appwrite": "^14.1.0"
+  }
+}

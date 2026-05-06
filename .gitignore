@@ -1,6 +1,6 @@
-# RESTAURANTES - No build dependencies, all static files
-# This file is empty since we don't use npm/node_modules
-# Everything should be committed to git
+node_modules/
+
+# Static site + optional Node seed script (see package.json)
 
 # But ignore if someone adds secrets (be careful!)
 .env.local

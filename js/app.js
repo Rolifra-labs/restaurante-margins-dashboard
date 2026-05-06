@@ -1,5 +1,5 @@
-import { config, getAppwriteClient } from './config.js?v=20260506-5';
-import { auth } from './auth.js?v=20260506-5';
+import { config, getAppwriteClient } from './config.js';
+import { auth } from './auth.js';
 
 class AppManager {
   constructor() {
@@ -122,24 +122,6 @@ class AppManager {
       console.error('Error creating dish:', error);
       throw new Error(error.message || 'Failed to create dish');
     }
-  }
-
-  async seedSampleDishesIfEmpty() {
-    await this.fetchDishes();
-    if (this.dishes.length > 0) return this.dishes;
-
-    const sampleDishes = [
-      { name: 'Pizza Margarita', category: 'Pizzas', sale_price: 12.0, ingredient_cost: 3.5, min_margin_alert: 15 },
-      { name: 'Pasta Carbonara', category: 'Pastas', sale_price: 14.0, ingredient_cost: 4.2, min_margin_alert: 15 },
-      { name: 'Ensalada César', category: 'Ensaladas', sale_price: 9.5, ingredient_cost: 2.8, min_margin_alert: 15 },
-      { name: 'Hamburguesa Gourmet', category: 'Principales', sale_price: 11.0, ingredient_cost: 4.5, min_margin_alert: 15 },
-      { name: 'Tarta de Queso', category: 'Postres', sale_price: 6.5, ingredient_cost: 2.1, min_margin_alert: 15 }
-    ];
-
-    for (const dish of sampleDishes) {
-      await this.createDish(dish);
-    }
-    return this.dishes;
   }
 
   async updateDish(dishId, dishData) {
