@@ -13,7 +13,6 @@ class AuthManager {
     if (client) {
       this.account = new window.Appwrite.Account(client);
       this.database = new window.Appwrite.Databases(client);
-      this.users = new window.Appwrite.Users(client);
     }
   }
 
@@ -159,7 +158,7 @@ export async function handleRegisterSubmit(e) {
 
   try {
     await auth.registerRestaurant(restaurantName, email, password, phone);
-    window.location.href = '/dashboard';
+    window.location.href = '/dashboard.html';
   } catch (error) {
     alert(`Error: ${error.message}`);
   }
@@ -179,7 +178,7 @@ export async function handleLoginSubmit(e) {
 
   try {
     await auth.loginEmail(email, password);
-    window.location.href = '/dashboard';
+    window.location.href = '/dashboard.html';
   } catch (error) {
     alert(`Error: ${error.message}`);
   }
