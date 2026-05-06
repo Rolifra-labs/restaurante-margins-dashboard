@@ -4,3 +4,18 @@
   X-XSS-Protection: 1; mode=block
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: geolocation=(), microphone=(), camera=()
+
+/index.html
+  Cache-Control: no-store
+
+/login.html
+  Cache-Control: no-store
+
+/register.html
+  Cache-Control: no-store
+
+/dashboard.html
+  Cache-Control: no-store
+
+/js/*
+  Cache-Control: no-store
