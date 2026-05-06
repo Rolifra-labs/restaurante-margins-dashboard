@@ -206,7 +206,7 @@
     async function init() {
       const user = await auth.getCurrentUser();
       if (!user) {
-        window.location.href = '/login.html';
+        window.location.href = './login.html';
         return;
       }
 
