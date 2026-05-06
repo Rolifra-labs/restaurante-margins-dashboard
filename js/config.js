@@ -3,7 +3,7 @@
 
 export const config = {
   // Appwrite configuration
-  appwriteEndpoint: 'https://backend.rolifra.com',
+  appwriteEndpoint: 'https://backend.rolifra.com/v1',
   appwriteProject: '69fb32a8001bfa20b23c',
 
   // n8n webhook URL - fill this after creating the webhook workflow
